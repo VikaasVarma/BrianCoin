@@ -43,7 +43,7 @@ describe("Get tokens", function () {
 			brianToken.get_tokens(1, {
 				value: 100,
 			})
-		).to.be.revertedWith("Mismatching value and amount");
+		).to.be.reverted;
 		expect(await brianToken.balances(owner.address)).to.equal(0);
 		expect(await provider.getBalance(brianToken.address)).to.equal(0);
 	});
@@ -53,9 +53,7 @@ describe("Get tokens", function () {
 			value: utils.parseEther("1"),
 		});
 
-		await expect(brianToken.withdraw_tokens(100001)).to.be.revertedWith(
-			"Not Enough BrianCoin"
-		);
+		await expect(brianToken.withdraw_tokens(100001)).to.be.reverted;
 
 		expect(await provider.getBalance(brianToken.address)).to.equal(
 			utils.parseEther("1")
@@ -75,9 +73,8 @@ describe("Get tokens", function () {
 		await brianToken.transfer_tokens(owner.address, 50000);
 		expect(await brianToken.balances(owner.address)).to.equal(150000);
 		expect(await brianToken.balances(accounts[1].address)).to.equal(50000);
-		await expect(
-			brianToken.transfer_tokens(owner.address, 50001)
-		).to.be.revertedWith("Not Enough BrianCoin");
+		await expect(brianToken.transfer_tokens(owner.address, 50001)).to.be
+			.reverted;
 	});
 
 	it("Should emit transactions", async function () {
@@ -124,9 +121,7 @@ describe("Make Changes to the boys", function () {
 
 	it("Shouldn't allow others to add to fam", async function () {
 		brianToken = brianToken.connect(accounts[1]);
-		await expect(
-			brianToken.add_to_fam(accounts[2].address)
-		).to.be.revertedWith("Only the boys can add to fam");
+		await expect(brianToken.add_to_fam(accounts[2].address)).to.be.reverted;
 		expect(await brianToken.the_boys(accounts[2].address)).to.equal(false);
 	});
 
@@ -143,8 +138,7 @@ describe("Make Changes to the boys", function () {
 		expect(await brianToken.the_boys(accounts[1].address)).to.equal(true);
 
 		brianToken = brianToken.connect(accounts[1]);
-		await expect(
-			brianToken.remove_from_fam(accounts[1].address)
-		).to.be.revertedWith("Only the owner can remove a boy");
+		await expect(brianToken.remove_from_fam(accounts[1].address)).to.be
+			.reverted;
 	});
 });
