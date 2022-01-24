@@ -8,5 +8,13 @@ module.exports = {
 			url: process.env.GANACHE_URL,
 			accounts: process.env.TEST_PRIVATE_KEYS.split(","),
 		},
+		mainnet: {
+			url: process.env.MAINNET_URL,
+			accounts: [process.env.MY_PRIVATE_KEY],
+		},
+		rinkeby: {
+			url: process.env.RINKEBY_URL,
+			accounts: [process.env.TEST_PRIVATE_KEY],
+		},
 	},
 };

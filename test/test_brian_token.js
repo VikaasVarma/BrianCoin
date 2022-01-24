@@ -22,7 +22,7 @@ describe("Get tokens", function () {
 		expect(await provider.getBalance(brianToken.address)).to.equal(
 			utils.parseEther("1")
 		);
-		expect(await brianToken.balanceOf(owner.address)).to.equal(100000);
+		expect(await brianToken.balances(owner.address)).to.equal(100000);
 	});
 
 	it("Should take some BrianCoins and give ether", async function () {
@@ -35,7 +35,7 @@ describe("Get tokens", function () {
 		expect(await provider.getBalance(brianToken.address)).to.equal(
 			utils.parseEther("0.75")
 		);
-		expect(await brianToken.balanceOf(owner.address)).to.equal(75000);
+		expect(await brianToken.balances(owner.address)).to.equal(75000);
 	});
 
 	it("Should revert transaction if incorrect value is sent", async function () {
@@ -44,7 +44,7 @@ describe("Get tokens", function () {
 				value: 100,
 			})
 		).to.be.revertedWith("Mismatching value and amount");
-		expect(await brianToken.balanceOf(owner.address)).to.equal(0);
+		expect(await brianToken.balances(owner.address)).to.equal(0);
 		expect(await provider.getBalance(brianToken.address)).to.equal(0);
 	});
 
@@ -60,7 +60,24 @@ describe("Get tokens", function () {
 		expect(await provider.getBalance(brianToken.address)).to.equal(
 			utils.parseEther("1")
 		);
-		expect(await brianToken.balanceOf(owner.address)).to.equal(100000);
+		expect(await brianToken.balances(owner.address)).to.equal(100000);
+	});
+
+	it("Should allow transfers", async function () {
+		await brianToken.get_tokens(100000, {
+			value: utils.parseEther("1"),
+		});
+		brianToken = brianToken.connect(accounts[1]);
+		await brianToken.get_tokens(100000, {
+			value: utils.parseEther("1"),
+		});
+
+		await brianToken.transfer_tokens(owner.address, 50000);
+		expect(await brianToken.balances(owner.address)).to.equal(150000);
+		expect(await brianToken.balances(accounts[1].address)).to.equal(50000);
+		await expect(
+			brianToken.transfer_tokens(owner.address, 50001)
+		).to.be.revertedWith("Not Enough BrianCoin");
 	});
 
 	it("Should emit transactions", async function () {
@@ -119,13 +136,9 @@ describe("Make Changes to the boys", function () {
 
 		await brianToken.remove_from_fam(accounts[1].address);
 		expect(await brianToken.the_boys(accounts[1].address)).to.equal(false);
-
-		await expect(
-			brianToken.remove_from_fam(owner.address)
-		).to.be.revertedWith("Owner cannot remove himself");
 	});
 
-	it("Shouldn't allow the others to remove to fam", async function () {
+	it("Shouldn't allow the others to remove from fam", async function () {
 		await brianToken.add_to_fam(accounts[1].address);
 		expect(await brianToken.the_boys(accounts[1].address)).to.equal(true);
 
@@ -133,39 +146,5 @@ describe("Make Changes to the boys", function () {
 		await expect(
 			brianToken.remove_from_fam(accounts[1].address)
 		).to.be.revertedWith("Only the owner can remove a boy");
-	});
-
-	it("Should return balances on removal", async function () {
-		await brianToken.add_to_fam(accounts[1].address);
-
-		brianToken = brianToken.connect(accounts[1]);
-		await brianToken.get_tokens(100000, {
-			value: utils.parseEther("1"),
-		});
-
-		brianToken = brianToken.connect(accounts[0]);
-
-		let initial_ether = await provider.getBalance(accounts[1].address);
-		await brianToken.remove_from_fam(accounts[1].address);
-		let final_ether = await provider.getBalance(accounts[1].address);
-
-		expect(final_ether).to.be.above(initial_ether);
-		expect(await brianToken.balanceOf(accounts[1].address)).to.equal(0);
-	});
-
-	it("Should emit on addition and removal", async function () {
-		await expect(brianToken.add_to_fam(accounts[1].address))
-			.to.emit(brianToken, "NewMember")
-			.withArgs(owner.address, accounts[1].address);
-
-		brianToken = brianToken.connect(accounts[1]);
-		await expect(brianToken.add_to_fam(accounts[2].address))
-			.to.emit(brianToken, "NewMember")
-			.withArgs(accounts[1].address, accounts[2].address);
-
-		brianToken = brianToken.connect(owner);
-		await expect(brianToken.remove_from_fam(accounts[2].address))
-			.to.emit(brianToken, "RemoveMember")
-			.withArgs(accounts[2].address);
 	});
 });
